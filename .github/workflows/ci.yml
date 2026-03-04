@@ -80,10 +80,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OUTPUT=$(npx semantic-release --no-ci 2>&1) || true
-          echo "$OUTPUT"
-          if echo "$OUTPUT" | grep -q "Published release"; then
-            VERSION=$(echo "$OUTPUT" | sed -n 's/.*Published release \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p' | head -1)
+          npx semantic-release --no-ci || true
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Latest tag: $LATEST_TAG"
+          if [ -n "$LATEST_TAG" ]; then
+            VERSION="${LATEST_TAG#v}"
             echo "new_release_published=true" >> "$GITHUB_OUTPUT"
             echo "new_release_version=$VERSION" >> "$GITHUB_OUTPUT"
           else
