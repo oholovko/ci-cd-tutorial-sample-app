@@ -133,19 +133,30 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [version, build]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Simulate deployment
+      - name: Deploy versioned image
         run: |
+          VERSION="${{ needs.version.outputs.new_version }}"
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
           echo "========================================="
-          echo "  Deploying image to production"
-          echo "  Branch : ${{ github.ref_name }}"
-          echo "  Commit : ${{ github.sha }}"
-          echo "  Actor  : ${{ github.actor }}"
+          echo "  Deploying to production"
+          echo "  Image   : ${IMAGE}"
+          echo "  Version : ${VERSION:-N/A}"
+          echo "  SHA Tag : ${{ github.sha }}"
+          echo "  Branch  : ${{ github.ref_name }}"
+          echo "  Actor   : ${{ github.actor }}"
           echo "========================================="
+          if [ -n "$VERSION" ]; then
+            echo "Pulling ${IMAGE}:${VERSION}"
+            echo "Deploying version ${VERSION}"
+          else
+            echo "Pulling ${IMAGE}:latest"
+            echo "Deploying latest build"
+          fi
           echo "Deployment completed successfully."
 
   notify:

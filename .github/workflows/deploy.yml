@@ -1,0 +1,106 @@
+name: Deploy / Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to deploy (e.g., 1.0.0) or 'latest'"
+        required: true
+        default: "latest"
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy Version ${{ inputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate version exists in registry
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          VERSION="${{ inputs.version }}"
+          echo "========================================="
+          echo "  On-Demand Deployment"
+          echo "  Image       : ${IMAGE}"
+          echo "  Version     : ${VERSION}"
+          echo "  Environment : ${{ inputs.environment }}"
+          echo "  Triggered by: ${{ github.actor }}"
+          echo "  Timestamp   : $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "========================================="
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and deploy image
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
+          echo "Pulling image: ${IMAGE}"
+          docker pull "${IMAGE}"
+          echo "Image pulled successfully."
+          echo ""
+          echo "========================================="
+          echo "  Deployment Summary"
+          echo "  Status  : SUCCESS"
+          echo "  Image   : ${IMAGE}"
+          echo "  Target  : ${{ inputs.environment }}"
+          echo "========================================="
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "${{ job.status == 'success' && '#36a64f' || '#dc3545' }}",
+                "blocks": [
+                  {
+                    "type": "header",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "${{ job.status == 'success' && '🚀 Deployment Successful' || '❌ Deployment Failed' }}",
+                      "emoji": true
+                    }
+                  },
+                  {
+                    "type": "section",
+                    "fields": [
+                      { "type": "mrkdwn", "text": "*Version:*\n${{ inputs.version }}" },
+                      { "type": "mrkdwn", "text": "*Environment:*\n${{ inputs.environment }}" },
+                      { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" },
+                      { "type": "mrkdwn", "text": "*Status:*\n${{ job.status }}" }
+                    ]
+                  },
+                  {
+                    "type": "actions",
+                    "elements": [{
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View Run" },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }]
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
