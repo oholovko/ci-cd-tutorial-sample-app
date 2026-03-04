@@ -66,41 +66,29 @@ jobs:
 
       - name: Notify Slack
         if: always()
-        uses: 8398a7/action-slack@v3
+        uses: slackapi/slack-github-action@v2
         with:
-          status: ${{ job.status }}
-          custom_payload: |
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
             {
-              "attachments": [{
-                "color": "${{ job.status == 'success' && '#36a64f' || '#dc3545' }}",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "${{ job.status == 'success' && '🚀 Deployment Successful' || '❌ Deployment Failed' }}",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Version:*\n${{ inputs.version }}" },
-                      { "type": "mrkdwn", "text": "*Environment:*\n${{ inputs.environment }}" },
-                      { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" },
-                      { "type": "mrkdwn", "text": "*Status:*\n${{ job.status }}" }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [{
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "View Run" },
-                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }]
-                  }
-                ]
-              }]
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": { "type": "plain_text", "text": "${{ job.status == 'success' && '🚀 Deployment Successful' || '❌ Deployment Failed' }}", "emoji": true }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Version:*\n${{ inputs.version }}" },
+                    { "type": "mrkdwn", "text": "*Environment:*\n${{ inputs.environment }}" },
+                    { "type": "mrkdwn", "text": "*Triggered by:*\n${{ github.actor }}" },
+                    { "type": "mrkdwn", "text": "*Status:*\n${{ job.status }}" }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "View Run" }, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }]
+                }
+              ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -183,162 +183,114 @@ jobs:
 
       - name: Notify Slack — Success
         if: steps.status.outputs.result == 'success'
-        uses: 8398a7/action-slack@v3
+        uses: slackapi/slack-github-action@v2
         with:
-          status: success
-          custom_payload: |
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
             {
-              "attachments": [{
-                "color": "#36a64f",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "✅ Pipeline Passed",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                      { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
-                      { "type": "mrkdwn", "text": "*Commit:*\n`${{ github.sha }}`" },
-                      { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Commit Message:*\n${{ github.event.head_commit.message || 'N/A' }}"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Test:* ✅ Passed" },
-                      { "type": "mrkdwn", "text": "*Build:* ✅ Passed" },
-                      { "type": "mrkdwn", "text": "*Deploy:* ✅ Passed" }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [{
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "View Run" },
-                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }]
-                  }
-                ]
-              }]
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": { "type": "plain_text", "text": "✅ Pipeline Passed", "emoji": true }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Version:*\n${{ needs.version.outputs.new_version || 'N/A' }}" },
+                    { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": { "type": "mrkdwn", "text": "*Commit:* `${{ github.sha }}`\n*Message:* ${{ github.event.head_commit.message }}" }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Test:* ✅ Passed" },
+                    { "type": "mrkdwn", "text": "*Build:* ✅ Passed" },
+                    { "type": "mrkdwn", "text": "*Deploy:* ✅ Passed" }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "View Run" }, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }]
+                }
+              ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack — Failure
         if: steps.status.outputs.result == 'failure'
-        uses: 8398a7/action-slack@v3
+        uses: slackapi/slack-github-action@v2
         with:
-          status: failure
-          mention: "here"
-          if_mention: failure
-          custom_payload: |
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
             {
-              "attachments": [{
-                "color": "#dc3545",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "❌ Pipeline Failed",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "<!here> Pipeline failed — immediate attention needed."
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                      { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
-                      { "type": "mrkdwn", "text": "*Commit:*\n`${{ github.sha }}`" },
-                      { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "*Commit Message:*\n${{ github.event.head_commit.message || 'N/A' }}"
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Test:* ${{ needs.test.result == 'success' && '✅ Passed' || (needs.test.result == 'failure' && '❌ Failed' || '⏭️ Skipped') }}" },
-                      { "type": "mrkdwn", "text": "*Build:* ${{ needs.build.result == 'success' && '✅ Passed' || (needs.build.result == 'failure' && '❌ Failed' || '⏭️ Skipped') }}" },
-                      { "type": "mrkdwn", "text": "*Deploy:* ${{ needs.deploy.result == 'success' && '✅ Passed' || (needs.deploy.result == 'failure' && '❌ Failed' || '⏭️ Skipped') }}" }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [{
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "🔍 View Logs" },
-                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                      "style": "danger"
-                    }]
-                  }
-                ]
-              }]
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": { "type": "plain_text", "text": "❌ Pipeline Failed", "emoji": true }
+                },
+                {
+                  "type": "section",
+                  "text": { "type": "mrkdwn", "text": "<!here> Pipeline failed — immediate attention needed." }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Version:*\n${{ needs.version.outputs.new_version || 'N/A' }}" },
+                    { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": { "type": "mrkdwn", "text": "*Commit:* `${{ github.sha }}`\n*Message:* ${{ github.event.head_commit.message }}" }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Test:* ${{ needs.test.result == 'success' && '✅' || '❌' }} ${{ needs.test.result }}" },
+                    { "type": "mrkdwn", "text": "*Build:* ${{ needs.build.result == 'success' && '✅' || '❌' }} ${{ needs.build.result }}" },
+                    { "type": "mrkdwn", "text": "*Deploy:* ${{ needs.deploy.result == 'success' && '✅' || (needs.deploy.result == 'skipped' && '⏭️' || '❌') }} ${{ needs.deploy.result }}" }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "🔍 View Logs" }, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }]
+                }
+              ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack — Cancelled
         if: steps.status.outputs.result == 'cancelled'
-        uses: 8398a7/action-slack@v3
+        uses: slackapi/slack-github-action@v2
         with:
-          status: cancelled
-          custom_payload: |
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
             {
-              "attachments": [{
-                "color": "#6c757d",
-                "blocks": [
-                  {
-                    "type": "header",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "⚠️ Pipeline Cancelled",
-                      "emoji": true
-                    }
-                  },
-                  {
-                    "type": "section",
-                    "fields": [
-                      { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                      { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
-                      { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
-                    ]
-                  },
-                  {
-                    "type": "actions",
-                    "elements": [{
-                      "type": "button",
-                      "text": { "type": "plain_text", "text": "View Run" },
-                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    }]
-                  }
-                ]
-              }]
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": { "type": "plain_text", "text": "⚠️ Pipeline Cancelled", "emoji": true }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "View Run" }, "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }]
+                }
+              ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
