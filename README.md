@@ -1,4 +1,4 @@
-![CI/CD Pipeline](https://github.com/oholovko/ci-cd-tutorial-sample-app/actions/workflows/ci.yml/badge.svg?branch=main)
+![CI/CD Pipeline](https://github.com/oholovko/ci-cd-tutorial-sample-app/actions/workflows/ci.yml/badge.svg?branch=master)
 
 # CD/CI Tutorial Sample Application ⚙
 
