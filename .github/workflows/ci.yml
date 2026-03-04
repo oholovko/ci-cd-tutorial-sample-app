@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -51,9 +51,50 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover
 
+  version:
+    name: Semantic Version
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    outputs:
+      new_release: ${{ steps.semantic.outputs.new_release_published }}
+      new_version: ${{ steps.semantic.outputs.new_release_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install semantic-release
+        run: npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/github
+
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OUTPUT=$(npx semantic-release 2>&1) || true
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "Published release"; then
+            VERSION=$(echo "$OUTPUT" | grep -oP 'Published release \K[0-9]+\.[0-9]+\.[0-9]+')
+            echo "new_release_published=true" >> "$GITHUB_OUTPUT"
+            echo "new_release_version=$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_release_published=false" >> "$GITHUB_OUTPUT"
+            echo "new_release_version=" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build Docker Image
-    needs: test
+    needs: [test, version]
+    if: always() && needs.test.result == 'success'
     runs-on: ubuntu-latest
 
     outputs:
@@ -79,6 +120,7 @@ jobs:
             type=sha,prefix=
             type=ref,event=branch
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.version.outputs.new_version }},enable=${{ needs.version.outputs.new_release == 'true' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -107,7 +149,7 @@ jobs:
 
   notify:
     name: Slack Notification
-    needs: [test, build, deploy]
+    needs: [test, version, build, deploy]
     if: always()
     runs-on: ubuntu-latest
 
