@@ -132,7 +132,6 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: success
-          fields: repo,message,commit,author,action,eventName,ref,workflow,took
           custom_payload: |
             {
               "attachments": [{
@@ -189,7 +188,6 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: failure
-          fields: repo,message,commit,author,action,eventName,ref,workflow,took
           mention: "here"
           if_mention: failure
           custom_payload: |
@@ -256,7 +254,6 @@ jobs:
         uses: 8398a7/action-slack@v3
         with:
           status: cancelled
-          fields: repo,message,commit,author,ref,workflow
           custom_payload: |
             {
               "attachments": [{
