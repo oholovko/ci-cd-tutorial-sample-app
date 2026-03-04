@@ -1,3 +1,5 @@
+![CI/CD Pipeline](https://github.com/oholovko/ci-cd-tutorial-sample-app/actions/workflows/ci.yml/badge.svg?branch=main)
+
 # CD/CI Tutorial Sample Application ⚙
 
 **NOTE:** This code was written for an
