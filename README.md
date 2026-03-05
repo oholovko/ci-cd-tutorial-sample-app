@@ -118,6 +118,81 @@ or use the automated deploy feature:
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
+## CI/CD Pipeline
+
+The project uses GitHub Actions with the following automated workflows:
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| **CI/CD Pipeline** (`ci.yml`) | Push/PR to `master` | Test → Version → Build → Deploy → Notify |
+| **Deploy / Rollback** (`deploy.yml`) | Manual (`workflow_dispatch`) | Deploy or rollback a specific version |
+| **Cleanup Old Images** (`cleanup.yml`) | Weekly schedule / Manual | Remove old untagged container images |
+
+### Pipeline Stages
+
+1. **Test** — Lint (flake8) and unit tests (unittest)
+2. **Version** — `semantic-release` analyzes commits and creates a new semver tag + GitHub Release
+3. **Build** — Docker image built and pushed to GHCR with multiple tags
+4. **Deploy** — Deploys the versioned image to production (on `master` push)
+5. **Notify** — Sends Slack notification with pipeline status and version info
+
+## Versioning Strategy
+
+This project uses **Semantic Versioning** ([semver.org](https://semver.org)) with the format `MAJOR.MINOR.PATCH`:
+
+- **MAJOR** — breaking changes
+- **MINOR** — new features, backwards compatible
+- **PATCH** — bug fixes
+
+### How Versions Are Generated
+
+Versions are created automatically by `semantic-release` based on conventional commit messages:
+
+| Commit prefix | Version bump | Example |
+|---|---|---|
+| `fix:` | Patch (1.0.0 → 1.0.1) | `fix: resolve login error` |
+| `feat:` | Minor (1.0.0 → 1.1.0) | `feat: add user profile` |
+| `feat!:` or `BREAKING CHANGE:` | Major (1.0.0 → 2.0.0) | `feat!: redesign API` |
+
+When a version is published:
+1. A GitHub Release and git tag (`vX.Y.Z`) are created
+2. The Docker image is tagged with the version in GHCR
+
+### Docker Image Tags
+
+Each build produces multiple tags in `ghcr.io/oholovko/ci-cd-tutorial-sample-app`:
+
+| Tag | Description |
+|---|---|
+| `1.2.0` | Semantic version (immutable) |
+| `latest` | Most recent build on default branch |
+| `master` | Branch name |
+| `abc1234` | Short commit SHA |
+
+### Deploy a Specific Version
+
+Go to **Actions** → **Deploy / Rollback** → **Run workflow**, then enter:
+- **Version**: the tag to deploy (e.g., `1.0.0` or `latest`)
+- **Environment**: `production` or `staging`
+
+### Rollback Procedure
+
+To rollback to a previous version:
+
+1. Go to **Actions** → **Deploy / Rollback** → **Run workflow**
+2. Enter the previous version number (e.g., `1.0.0`)
+3. Select the target environment
+4. Click **Run workflow**
+
+The previous image is pulled directly from GHCR — no rebuild required.
+
+### Artifact Retention
+
+- A scheduled cleanup runs weekly (Sunday 3:00 AM UTC)
+- Keeps the **10 most recent** image versions
+- Only deletes **untagged** images — semver-tagged versions are always preserved
+- Can also be triggered manually from **Actions** → **Cleanup Old Images**
+
 For more information about using Python on Heroku, see these Dev Center articles:
 
  - [Python on Heroku](https://devcenter.heroku.com/categories/python)
