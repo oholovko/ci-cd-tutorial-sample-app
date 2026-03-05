@@ -173,7 +173,7 @@ Each build produces multiple tags in `ghcr.io/oholovko/ci-cd-tutorial-sample-app
 
 Go to **Actions** → **Deploy / Rollback** → **Run workflow**, then enter:
 - **Version**: the tag to deploy (e.g., `1.0.0` or `latest`)
-- **Environment**: `production` or `staging`
+- **Environment**: `production`, `staging`
 
 ### Rollback Procedure
 
