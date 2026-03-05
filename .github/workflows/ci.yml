@@ -142,12 +142,13 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.new_version }}"
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          BRANCH="${{ github.head_ref || github.ref_name }}"
           echo "========================================="
           echo "  Deploying to production"
           echo "  Image   : ${IMAGE}"
           echo "  Version : ${VERSION:-N/A}"
           echo "  SHA Tag : ${{ github.sha }}"
-          echo "  Branch  : ${{ github.ref_name }}"
+          echo "  Branch  : ${BRANCH}"
           echo "  Actor   : ${{ github.actor }}"
           echo "========================================="
           if [ -n "$VERSION" ]; then
@@ -198,7 +199,7 @@ jobs:
                   "type": "section",
                   "fields": [
                     { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.head_ref || github.ref_name }}" },
                     { "type": "mrkdwn", "text": "*Version:*\n${{ needs.version.outputs.new_version || 'N/A' }}" },
                     { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
                   ]
@@ -243,7 +244,7 @@ jobs:
                   "type": "section",
                   "fields": [
                     { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.head_ref || github.ref_name }}" },
                     { "type": "mrkdwn", "text": "*Version:*\n${{ needs.version.outputs.new_version || 'N/A' }}" },
                     { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
                   ]
@@ -284,7 +285,7 @@ jobs:
                   "type": "section",
                   "fields": [
                     { "type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}" },
-                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                    { "type": "mrkdwn", "text": "*Branch:*\n${{ github.head_ref || github.ref_name }}" },
                     { "type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}" }
                   ]
                 },
